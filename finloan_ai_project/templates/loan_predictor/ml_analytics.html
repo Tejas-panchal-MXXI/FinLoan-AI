@@ -1,0 +1,450 @@
+{% extends 'loan_predictor/base.html' %}
+
+{% block title %}ML Analytics Dashboard - FinLoan AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f8fafc;
+    }
+    
+    /* Page Header - Finance Blue Theme */
+    .analytics-header {
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        color: white;
+        padding: 80px 0 60px;
+        text-align: center;
+    }
+    
+    .analytics-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .analytics-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    /* Statistics Cards - Finance Theme */
+    .stats-overview {
+        margin-bottom: 40px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        padding: 40px 30px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 25px;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #1E40AF, #3B82F6, #059669, #10B981);
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: 0.6s;
+    }
+    
+    .stat-card:hover::after {
+        left: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+    }
+    
+    .stat-number {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 10px;
+        display: block;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Different finance colors for each stat */
+    .stat-card:nth-child(1) .stat-number {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-card:nth-child(2) .stat-number {
+        background: linear-gradient(135deg, #059669, #10B981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-card:nth-child(3) .stat-number {
+        background: linear-gradient(135deg, #DC2626, #EF4444);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-card:nth-child(4) .stat-number {
+        background: linear-gradient(135deg, #EA580C, #F97316);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Dashboard Cards - Finance Theme */
+    .dashboard-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+        height: 100%;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .card-title i {
+        margin-right: 0.5rem;
+    }
+    
+    /* Stats Number Styling - Finance Colors */
+    .stats-number {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Progress Bars - Finance Colors */
+    .progress {
+        height: 8px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 1s ease;
+    }
+    
+    /* Progress Bar Colors - Finance Theme */
+    .progress-bar.logistic {
+        background: linear-gradient(90deg, #1E40AF, #3B82F6);
+    }
+    
+    .progress-bar.svm {
+        background: linear-gradient(90deg, #0EA5E9, #06B6D4);
+    }
+    
+    .progress-bar.random-forest {
+        background: linear-gradient(90deg, #059669, #10B981);
+    }
+    
+    /* Action Buttons - Finance Theme */
+    .btn-analytics {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        border: none;
+        margin: 0.5rem;
+    }
+    
+    .btn-primary-analytics {
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        color: white;
+    }
+    
+    .btn-primary-analytics:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+        color: white;
+    }
+    
+    .btn-outline-analytics {
+        background: transparent;
+        color: #1E40AF;
+        border: 2px solid #1E40AF;
+    }
+    
+    .btn-outline-analytics:hover {
+        background: #1E40AF;
+        color: white;
+    }
+    
+    /* Feature Importance Colors */
+    .bg-primary { background: #1E40AF !important; }
+    .bg-info { background: #0EA5E9 !important; }
+    .bg-warning { background: #EA580C !important; }
+    .bg-success { background: #059669 !important; }
+    .bg-secondary { background: #6B7280 !important; }
+    
+    @media (max-width: 768px) {
+        .analytics-title {
+            font-size: 2.5rem;
+        }
+        
+        .dashboard-card, .stat-card {
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            height: 160px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Analytics Header -->
+<section class="analytics-header">
+    <div class="container">
+        <h1 class="analytics-title">ML Analytics Dashboard</h1>
+        <p class="analytics-subtitle">Comprehensive insights from our AI-powered loan processing system</p>
+    </div>
+</section>
+
+<!-- Statistics Overview Section -->
+<section class="py-5" style="margin-top: -30px; position: relative; z-index: 10;">
+    <div class="container">
+        <div class="stats-overview">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="{{ total_applications|default:0 }}">{{ total_applications|default:0 }}</span>
+                        <span class="stat-label">Total Applications</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="{{ approved_applications|default:0 }}">{{ approved_applications|default:0 }}</span>
+                        <span class="stat-label">Approved Loans</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="{{ rejected_applications|default:0 }}">{{ rejected_applications|default:0 }}</span>
+                        <span class="stat-label">Rejected</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="{{ approval_rate|default:0 }}">{{ approval_rate|default:0 }}%</span>
+                        <span class="stat-label">Approval Rate %</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Model Performance Section -->
+<section class="py-5">
+    <div class="container">        
+        <div class="row g-4 mb-5">
+            <!-- Model Accuracy Chart -->
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="dashboard-card h-100 p-4">
+                    <h5 class="card-title fw-bold mb-4">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        Model Performance Comparison
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="mb-3">
+                                <div class="stats-number" style="font-size: 2rem;">86%</div>
+                                <small class="text-muted">Logistic Regression</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="mb-3">
+                                <div class="stats-number" style="font-size: 2rem;">84%</div>
+                                <small class="text-muted">SVM</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="mb-3">
+                                <div class="stats-number" style="font-size: 2rem;">82%</div>
+                                <small class="text-muted">Random Forest</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-stack mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Logistic Regression</span>
+                            <span class="small text-muted">86%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar logistic" style="width: 86%;"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">SVM</span>
+                            <span class="small text-muted">84%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar svm" style="width: 84%;"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">Random Forest</span>
+                            <span class="small text-muted">82%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar random-forest" style="width: 82%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature Importance -->
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="dashboard-card h-100 p-4">
+                    <h5 class="card-title fw-bold mb-4">
+                        <i class="fas fa-weight-hanging me-2 text-success"></i>
+                        Top Feature Importance
+                    </h5>
+                    <div class="space-y-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Credit History</span>
+                            <span class="badge bg-primary">35.2%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 35.2%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Total Income</span>
+                            <span class="badge bg-info">18.1%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 18.1%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Loan-Income Ratio</span>
+                            <span class="badge bg-warning">14.9%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 14.9%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Education Level</span>
+                            <span class="badge bg-success">12.2%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 12.2%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">Property Area</span>
+                            <span class="badge bg-secondary">8.5%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-secondary" style="width: 8.5%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="text-center mt-5" data-aos="fade-up">
+            <a href="{% url 'loan_application' %}" class="btn btn-analytics btn-primary-analytics">
+                <i class="fas fa-paper-plane me-2"></i>Start New Application
+            </a>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-analytics btn-outline-analytics">
+                <i class="fas fa-chart-line me-2"></i>View All Results
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate counter numbers
+    const animateValue = (element, start, end, duration) => {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const current = Math.floor(progress * (end - start) + start);
+            element.innerText = end.toString().includes('%') ? current + '%' : current;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    };
+
+    // Animate all stat numbers
+    document.querySelectorAll('.stat-number').forEach(el => {
+        const target = parseInt(el.dataset.target) || parseInt(el.innerText) || 0;
+        if (target > 0) {
+            animateValue(el, 0, target, 2000);
+        }
+    });
+});
+</script>
+{% endblock %}

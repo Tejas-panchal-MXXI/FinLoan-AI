@@ -1,0 +1,1048 @@
+{% extends 'loan_predictor/base.html' %}
+
+{% block title %}Admin Dashboard - FinLoan AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 3rem 0 2rem;
+        margin-top: -80px;
+        padding-top: 120px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .dashboard-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .dashboard-subtitle {
+        opacity: 0.9;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .filter-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .form-control-modern {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        background: white;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .btn-filter-modern {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    
+    .btn-filter-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        color: white;
+    }
+    
+    .btn-reset-modern {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    
+    .btn-reset-modern:hover {
+        background: #edf2f7;
+        transform: translateY(-2px);
+        color: #4a5568;
+    }
+    
+    .table-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 1.5rem 2rem;
+        border: none;
+        position: relative;
+    }
+    
+    .table-title {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin: 0;
+    }
+    
+    .table-modern {
+        margin: 0;
+        background: transparent;
+    }
+    
+    .table-modern thead th {
+        background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table-modern tbody td {
+        padding: 1.25rem 1.5rem;
+        border: none;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    
+    .table-modern tbody tr {
+        transition: var(--transition);
+    }
+    
+    .table-modern tbody tr:hover {
+        background: rgba(102, 126, 234, 0.02);
+        transform: scale(1.002);
+    }
+    
+    .applicant-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .applicant-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+    
+    .applicant-details {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-approved {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    
+    .status-rejected {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+        color: #856404;
+    }
+    
+    .probability-display {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .probability-bar {
+        flex: 1;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        min-width: 60px;
+    }
+    
+    .probability-fill {
+        height: 100%;
+        background: var(--primary-gradient);
+        border-radius: 4px;
+        transition: width 0.8s ease;
+    }
+    
+    .probability-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4a5568;
+        min-width: 45px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .btn-action-modern {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+    
+    .btn-view-modern {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+    
+    .btn-edit-modern {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+    
+    .btn-delete-modern {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    .btn-action-modern:hover {
+        transform: scale(1.1) translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .export-btn {
+        background: var(--success-gradient);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        color: white;
+    }
+    
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        color: #718096;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .loading-content {
+        text-align: center;
+        color: white;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+    }
+    
+    .toast-modern {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        box-shadow: var(--shadow-lg);
+        min-width: 300px;
+        transform: translateX(400px);
+        transition: var(--transition);
+    }
+    
+    .toast-modern.show {
+        transform: translateX(0);
+    }
+    
+    .toast-success {
+        border-left: 4px solid #22c55e;
+    }
+    
+    .toast-error {
+        border-left: 4px solid #ef4444;
+    }
+    
+    .toast-info {
+        border-left: 4px solid #3b82f6;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-title {
+            font-size: 2rem;
+        }
+        
+        .stats-card-modern {
+            padding: 1.5rem 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-card {
+            padding: 1.5rem;
+        }
+        
+        .table-modern tbody td {
+            padding: 1rem 0.75rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8" data-aos="fade-right">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-tachometer-alt me-3"></i>Admin Dashboard
+                </h1>
+                <p class="dashboard-subtitle mb-0">
+                    Monitor and manage loan applications with advanced analytics and insights
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end" data-aos="fade-left">
+                <button class="export-btn" onclick="exportData()">
+                    <i class="fas fa-download"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="pb-3">
+    <div class="container">
+        <div class="filter-card" data-aos="fade-up">
+            <h5 class="filter-title">
+                <i class="fas fa-filter me-2 text-primary"></i>Filter Applications
+            </h5>
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-medium">Search by Name</label>
+                    <input type="text" class="form-control form-control-modern" 
+                           name="search" placeholder="Enter applicant name..." 
+                           value="{{ search_query|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Status</label>
+                    <select class="form-control form-control-modern" name="status">
+                        <option value="">All Status</option>
+                        <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Education</label>
+                    <select class="form-control form-control-modern" name="education">
+                        <option value="">All Education</option>
+                        <option value="Graduate" {% if education_filter == 'Graduate' %}selected{% endif %}>Graduate</option>
+                        <option value="Not Graduate" {% if education_filter == 'Not Graduate' %}selected{% endif %}>Not Graduate</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Property Area</label>
+                    <select class="form-control form-control-modern" name="property_area">
+                        <option value="">All Areas</option>
+                        <option value="Urban" {% if property_area_filter == 'Urban' %}selected{% endif %}>Urban</option>
+                        <option value="Semiurban" {% if property_area_filter == 'Semiurban' %}selected{% endif %}>Semi-urban</option>
+                        <option value="Rural" {% if property_area_filter == 'Rural' %}selected{% endif %}>Rural</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-filter-modern flex-fill">
+                            <i class="fas fa-search me-2"></i>Filter
+                        </button>
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-reset-modern">
+                            <i class="fas fa-redo me-2"></i>Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Applications Table -->
+<section class="pb-5">
+    <div class="container">
+        <div class="table-card" data-aos="fade-up">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="fas fa-table me-2"></i>
+                    Loan Applications Management
+                    <span class="badge bg-white text-primary ms-2">{{ applications.count|default:0 }}</span>
+                </h5>
+            </div>
+            
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Applicant</th>
+                            <th>Loan Amount</th>
+                            <th>Income</th>
+                            <th>Status</th>
+                            <th>ML Confidence</th>
+                            <th>Date</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">#{{ application.id }}</span>
+                            </td>
+                            <td>
+                                <div class="applicant-info">
+                                    <div class="applicant-name">{{ application.applicant_name|default:"N/A" }}</div>
+                                    <div class="applicant-details">
+                                        {{ application.education|default:"N/A" }} • {{ application.property_area|default:"N/A" }}
+                                        {% if application.married == 'Yes' %}• Married{% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold" style="color: #667eea;">${{ application.loan_amount|default:0 }}K</span>
+                            </td>
+                            <td>
+                                {% with total_income=application.applicant_income|add:application.coapplicant_income %}
+                                <span class="fw-medium">${{ total_income|default:0|floatformat:0 }}</span>
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% if application.loan_status == 'Approved' %}
+                                    <span class="status-badge status-approved">
+                                        <i class="fas fa-check"></i>Approved
+                                    </span>
+                                {% elif application.loan_status == 'Rejected' %}
+                                    <span class="status-badge status-rejected">
+                                        <i class="fas fa-times"></i>Rejected
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i>Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if application.approval_probability %}
+                                    <div class="probability-display">
+                                        <div class="probability-bar">
+                                            <div class="probability-fill" 
+                                                 data-width="{{ application.approval_probability|floatformat:1 }}"
+                                                 style="width: 0%"></div>
+                                        </div>
+                                        <span class="probability-text">{{ application.approval_probability|floatformat:1 }}%</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ application.created_at|date:"M d, Y" }}</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'loan_result' application.pk %}" 
+                                       class="btn-action-modern btn-view-modern" 
+                                       title="View Details"
+                                       data-bs-toggle="tooltip">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn-action-modern btn-edit-modern" 
+                                            data-action="edit"
+                                            data-id="{{ application.id }}"
+                                            title="Edit Application"
+                                            data-bs-toggle="tooltip">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action-modern btn-delete-modern" 
+                                            data-action="delete"
+                                            data-id="{{ application.id }}"
+                                            data-name="{{ application.applicant_name|default:'Unknown' }}"
+                                            title="Delete Application"
+                                            data-bs-toggle="tooltip">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open empty-icon"></i>
+                <h5 class="empty-title">No applications found</h5>
+                <p>No applications match your current filters. Try adjusting the filters or check back later.</p>
+                <a href="{% url 'loan_application' %}" class="btn btn-filter-modern mt-3">
+                    <i class="fas fa-plus me-2"></i>Add New Application
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h5>Processing...</h5>
+        <p>Please wait while we process your request.</p>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Enhanced Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius: var(--border-radius); border: none; box-shadow: var(--shadow-xl);">
+            <div class="modal-header" style="background: var(--primary-gradient); color: white; border: none;">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-edit me-2"></i>Edit Loan Application
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editForm">
+                    <!-- Personal Information -->
+                    <h6 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-user me-2"></i>Personal Information
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Applicant Name *</label>
+                            <input type="text" class="form-control form-control-modern" id="edit_applicant_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Gender</label>
+                            <select class="form-control form-control-modern" id="edit_gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Married</label>
+                            <select class="form-control form-control-modern" id="edit_married">
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Dependents</label>
+                            <select class="form-control form-control-modern" id="edit_dependents">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3+">3+</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Education</label>
+                            <select class="form-control form-control-modern" id="edit_education">
+                                <option value="Graduate">Graduate</option>
+                                <option value="Not Graduate">Not Graduate</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Information -->
+                    <h6 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-dollar-sign me-2"></i>Financial Information
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Applicant Income *</label>
+                            <input type="number" class="form-control form-control-modern" id="edit_applicant_income" required min="1000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Co-applicant Income</label>
+                            <input type="number" class="form-control form-control-modern" id="edit_coapplicant_income" min="0" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Loan Amount (K) *</label>
+                            <input type="number" class="form-control form-control-modern" id="edit_loan_amount" required min="10">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Loan Term (months)</label>
+                            <input type="number" class="form-control form-control-modern" id="edit_loan_amount_term" value="360">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Self Employed</label>
+                            <select class="form-control form-control-modern" id="edit_self_employed">
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Property & Status -->
+                    <h6 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-home me-2"></i>Property & Status Information
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Property Area</label>
+                            <select class="form-control form-control-modern" id="edit_property_area">
+                                <option value="Urban">Urban</option>
+                                <option value="Semiurban">Semi-urban</option>
+                                <option value="Rural">Rural</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Application Status</label>
+                            <select class="form-control form-control-modern" id="edit_status">
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="edit_credit_history">
+                                <label class="form-check-label fw-medium" for="edit_credit_history">
+                                    Good Credit History
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-reset-modern" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-filter-modern" onclick="saveApplication()">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CountUp.js for number animations -->
+<script src="https://cdn.jsdelivr.net/npm/countup@1.8.2/dist/countUp.min.js"></script>
+
+<script>
+let currentEditId = null;
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Event delegation for action buttons (SAFE APPROACH)
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        const id = parseInt(button.dataset.id);
+        const name = button.dataset.name;
+        
+        e.preventDefault();
+        
+        if (action === 'edit') {
+            editApplication(id);
+        } else if (action === 'delete') {
+            deleteApplication(id, name);
+        }
+    });
+    
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Animate probability bars
+    animateProbabilityBars();
+    
+    // Initialize number counters
+    animateNumbers();
+    
+    // Handle form submission with loading state
+    const form = document.querySelector('form[method="get"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Filtering...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 5000);
+        });
+    }
+});
+
+function animateNumbers() {
+    const numbers = document.querySelectorAll('.stats-number-modern[data-count]');
+    numbers.forEach(number => {
+        const target = parseInt(number.getAttribute('data-count')) || 0;
+        const countUp = new CountUp(number, target, {
+            duration: 2,
+            useEasing: true,
+            useGrouping: true
+        });
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    countUp.start();
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
+        
+        observer.observe(number);
+    });
+}
+
+function animateProbabilityBars() {
+    const bars = document.querySelectorAll('.probability-fill[data-width]');
+    bars.forEach(bar => {
+        const targetWidth = (bar.getAttribute('data-width') || '0') + '%';
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = targetWidth;
+        }, 500);
+    });
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast-modern toast-${type}`;
+    
+    const icon = type === 'success' ? 'check' : type === 'error' ? 'times' : 'info-circle';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${icon} me-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (container.contains(toast)) {
+                container.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function exportData() {
+    showLoading();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const exportUrl = '{% url "export_csv" %}' + '?' + urlParams.toString();
+    
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => {
+        hideLoading();
+        showToast('Data exported successfully!', 'success');
+    }, 1000);
+}
+
+function editApplication(id) {
+    currentEditId = id;
+    showLoading();
+    
+    fetch(`/api/application/${id}/`)
+        .then(response => response.json())
+        .then(result => {
+            hideLoading();
+            
+            if (result.success) {
+                const data = result.data;
+                
+                document.getElementById('edit_applicant_name').value = data.applicant_name || '';
+                document.getElementById('edit_gender').value = data.gender || 'Male';
+                document.getElementById('edit_married').value = data.married || 'No';
+                document.getElementById('edit_dependents').value = data.dependents || '0';
+                document.getElementById('edit_education').value = data.education || 'Graduate';
+                document.getElementById('edit_self_employed').value = data.self_employed || 'No';
+                document.getElementById('edit_applicant_income').value = data.applicant_income || 0;
+                document.getElementById('edit_coapplicant_income').value = data.coapplicant_income || 0;
+                document.getElementById('edit_loan_amount').value = data.loan_amount || 0;
+                document.getElementById('edit_loan_amount_term').value = data.loan_amount_term || 360;
+                document.getElementById('edit_credit_history').checked = data.credit_history || false;
+                document.getElementById('edit_property_area').value = data.property_area || 'Urban';
+                document.getElementById('edit_status').value = data.loan_status || 'Pending';
+                
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            } else {
+                showToast('Error loading application data: ' + (result.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Error loading application data', 'error');
+            console.error('Error:', error);
+        });
+}
+
+function saveApplication() {
+    if (!currentEditId) return;
+    
+    const formData = {
+        applicant_name: document.getElementById('edit_applicant_name').value,
+        gender: document.getElementById('edit_gender').value,
+        married: document.getElementById('edit_married').value,
+        dependents: document.getElementById('edit_dependents').value,
+        education: document.getElementById('edit_education').value,
+        self_employed: document.getElementById('edit_self_employed').value,
+        applicant_income: parseInt(document.getElementById('edit_applicant_income').value) || 0,
+        coapplicant_income: parseInt(document.getElementById('edit_coapplicant_income').value) || 0,
+        loan_amount: parseInt(document.getElementById('edit_loan_amount').value) || 0,
+        loan_amount_term: parseInt(document.getElementById('edit_loan_amount_term').value) || 360,
+        credit_history: document.getElementById('edit_credit_history').checked,
+        property_area: document.getElementById('edit_property_area').value,
+        loan_status: document.getElementById('edit_status').value
+    };
+    
+    if (!formData.applicant_name || !formData.applicant_income || !formData.loan_amount) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch(`/api/application/${currentEditId}/update/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideLoading();
+        
+        if (result.success) {
+            showToast(result.message || 'Application updated successfully!', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+            modal.hide();
+            
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('Error updating application: ' + (result.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Error updating application', 'error');
+        console.error('Error:', error);
+    });
+}
+
+function deleteApplication(id, name) {
+    const safeName = name || 'this application';
+    const confirmed = confirm(`Are you sure you want to delete the application for "${safeName}"?\n\nThis action cannot be undone.`);
+    
+    if (confirmed) {
+        showLoading();
+        
+        fetch(`/api/application/${id}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            hideLoading();
+            
+            if (result.success) {
+                showToast(result.message || 'Application deleted successfully!', 'success');
+                
+                const row = document.querySelector(`button[data-id="${id}"]`).closest('tr');
+                if (row) {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-100%)';
+                    setTimeout(() => {
+                        row.remove();
+                        setTimeout(() => location.reload(), 1000);
+                    }, 300);
+                }
+            } else {
+                showToast('Error deleting application: ' + (result.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Error deleting application', 'error');
+            console.error('Error:', error);
+        });
+    }
+}
+</script>
+{% endblock %}

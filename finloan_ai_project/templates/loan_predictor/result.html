@@ -1,0 +1,246 @@
+{% extends 'loan_predictor/base.html' %}
+
+{% block title %}Loan Decision - FinLoan AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Result Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold">Loan Decision</h1>
+                <p class="lead">Here's the result of your loan application</p>
+            </div>
+
+            <!-- Main Result Card -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-body text-center p-5">
+                    {% if application %}
+                        {% if application.loan_status == 'Approved' %}
+                            <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
+                            <h2 class="text-success">Congratulations!</h2>
+                            <h4>Your loan has been APPROVED</h4>
+                            <div class="alert alert-success mt-3">
+                                <strong>Approval Probability:</strong> 
+                                {% if application.approval_probability %}
+                                    {{ application.approval_probability|floatformat:1 }}%
+                                {% else %}
+                                    85%
+                                {% endif %}
+                            </div>
+                        {% elif application.loan_status == 'Rejected' %}
+                            <i class="fas fa-times-circle fa-5x text-danger mb-3"></i>
+                            <h2 class="text-danger">We're Sorry</h2>
+                            <h4>Your loan has been REJECTED</h4>
+                            <div class="alert alert-danger mt-3">
+                                <strong>Approval Probability:</strong> 
+                                {% if application.approval_probability %}
+                                    {{ application.approval_probability|floatformat:1 }}%
+                                {% else %}
+                                    35%
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <i class="fas fa-clock fa-5x text-warning mb-3"></i>
+                            <h2 class="text-warning">Under Review</h2>
+                            <h4>Your loan is being PROCESSED</h4>
+                            <div class="alert alert-warning mt-3">
+                                <strong>Status:</strong> Pending Review
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle fa-5x text-warning mb-3"></i>
+                        <h2 class="text-warning">No Application Found</h2>
+                        <h4>Please submit a loan application first</h4>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Application Details -->
+            {% if application %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Application Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Applicant Name:</strong> {{ application.applicant_name|default:"N/A" }}</p>
+                            <p><strong>Loan Amount:</strong> ${{ application.loan_amount|default:0 }}K</p>
+                            <p><strong>Monthly Income:</strong> ${{ application.applicant_income|default:0 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Education:</strong> {{ application.education|default:"N/A" }}</p>
+                            <p><strong>Property Area:</strong> {{ application.property_area|default:"N/A" }}</p>
+                            <p><strong>Credit History:</strong> 
+                                {% if application.credit_history %}
+                                    <span class="badge bg-success">Good</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Poor</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-5">
+                <a href="{% url 'home' %}" class="btn btn-outline-primary btn-lg me-3">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+                <a href="{% url 'loan_application' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>New Application
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Result page spacing and colors */
+    .result-container {
+        background: #f7fafc;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        padding: 40px 35px;
+        margin: 0 auto;
+        max-width: 750px;
+    }
+    
+    /* Status sections proper coloring */
+    .status-approved {
+        background: linear-gradient(135deg, #48bb78, #38a169);
+        color: white;
+        padding: 35px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .status-rejected {
+        background: linear-gradient(135deg, #f56565, #e53e3e);
+        color: white;
+        padding: 35px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+        color: white;
+        padding: 35px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    /* Detail sections spacing */
+    .detail-card {
+        background: #f7fafc;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 25px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .detail-row:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 14px;
+    }
+    
+    .detail-value {
+        color: #667eea;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    /* Financial summary better colors */
+    .financial-summary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    /* Action buttons spacing */
+    .action-buttons {
+        text-align: center;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn-navigation {
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        margin: 0 8px;
+        transition: all 0.2s ease;
+    }
+    
+    /* Alert styling */
+    .alert {
+        border: none;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .alert-success {
+        background: #f0fff4;
+        color: #22543d;
+        border-left: 4px solid #48bb78;
+    }
+    
+    .alert-info {
+        background: #ebf8ff;
+        color: #2a4365;
+        border-left: 4px solid #4299e1;
+    }
+</style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Simple fade-in animation
+    $('.card').hide().fadeIn(1000);
+    
+    // Add some interactivity
+    $('.badge').hover(
+        function() { $(this).addClass('shadow'); },
+        function() { $(this).removeClass('shadow'); }
+    );
+});
+</script>
+{% endblock %}
+
