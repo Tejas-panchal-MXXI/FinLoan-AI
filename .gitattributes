@@ -1,2 +1,5 @@
 *.ipynb linguist-documentation
 *.ipynb linguist-generated=true
+templates/*.html linguist-documentation
+static/*.css linguist-documentation
+*.html linguist-language=Python
